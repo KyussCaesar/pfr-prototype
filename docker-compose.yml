@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  rstudio:
+    image: rocker/verse:3.6.0
+
+    environment:
+      - DISABLE_AUTH=true
+
+    ports:
+      - "127.0.0.1:8787:8787"
+
+    volumes:
+      - ".:/home/rstudio"
+
+  postgres:
+    image: postgres:11.5
+
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
+    volumes:
+      - "pfr-prototype-postgres:/var/lib/postgresql/data"
+
+    shm_size: '1g'
+
+volumes:
+  pfr-prototype-postgres:
+    external: true
+

@@ -1,0 +1,65 @@
+---
+title: "PFR Prototype 1"
+output:
+  flexdashboard::flex_dashboard:
+    theme: yeti
+    
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+message("Loading libraries")
+library(flexdashboard)
+library(shiny)
+
+message("Loading globals")
+source("utils.R")
+# conn <- db_connect()
+
+vals = reactiveValues()
+vals$records <-
+  data.frame(name = c(), type = c(), amount = c(), freq = c())
+
+add_record <- function(n, t, a, f) {
+  rid = nrow(vals$records) + 1
+  vals$records[rid,c("name", "type", "amount", "freq")] = c(n, t, a, f)
+  rid
+}
+
+```
+
+Data Entry {.sidebar data-width=300}
+=====================================================================
+
+### Add a new record
+
+```{r}
+textInput("name", "Name")
+selectInput("type", "Type", choices = list("expense", "income"))
+selectInput("freq", "Frequency",
+  choices = list("daily", "workdays", "weekly", "monthly", "yearly")
+)
+numericInput("amount", "Amount", NA)
+actionButton("submit", "Submit", class = "btn-primary")
+
+observeEvent(input$submit, {
+  add_record(input$name, input$type, input$amount, input$freq)
+  message("response submitted")
+})
+```
+
+Records
+=====================================================================
+
+### Records
+
+```{r}
+renderTable(vals$records)
+```
+
+Monthly Report
+=====================================================================
+
+```{r}
+renderText("Coming Soon!")
+```

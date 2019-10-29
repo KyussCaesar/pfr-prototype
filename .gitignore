@@ -1,0 +1,9 @@
+*
+!src/
+!packrat/init.R
+!packrat/packrat.opts
+!packrat/packrat.lock
+packrat/lib*/
+!*.R
+!*.Rmd
+!*.yml
