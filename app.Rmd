@@ -3,6 +3,7 @@ title: "PFR Prototype 1"
 output:
   flexdashboard::flex_dashboard:
     theme: yeti
+    orientation: rows
     
 runtime: shiny
 ---
@@ -12,34 +13,79 @@ message("Loading libraries")
 library(flexdashboard)
 library(shiny)
 
+options(error = function() traceback(3))
+  
 message("Loading globals")
 source("utils.R")
 # conn <- db_connect()
 
 vals = reactiveValues()
 vals$records <-
-  data.frame(name = c(), type = c(), amount = c(), freq = c())
+  data.frame(
+    id = c(),
+    name = c(),
+    type = c(),
+    amount = c(),
+    freq = c(),
+    datetime_added = c()
+  )
 
+vals$idctr = 0
+
+#' Add a record to the transaction table
 add_record <- function(n, t, a, f) {
-  rid = nrow(vals$records) + 1
-  vals$records[rid,c("name", "type", "amount", "freq")] = c(n, t, a, f)
+  rid = vals$idctr + 1
+  vals$idctr = rid
+
+  vals$records[
+    nrow(vals$records) + 1,
+    c("id", "name", "type", "amount", "freq", "datetime_added")
+  ] =
+    c(rid, n, t, a, f, Sys.time())
+
   rid
 }
 
+#' Remove a record from the transactions table
+rm_record <- function(rid) {
+
+  if (!(rid %in% vals$records[["id"]])) {
+    stop(sprintf("cannot remove record: id %i is invalid", rid))
+  }
+
+  keep = vals$records[["id"]] != rid
+  rcrd = vals$records[!keep,]
+  vals$records <- vals$records[keep,]
+
+  rcrd
+
+}
 ```
 
-Data Entry {.sidebar data-width=300}
+Add a transaction {.sidebar data-width=300}
 =====================================================================
 
-### Add a new record
+### Add a transaction
 
 ```{r}
-textInput("name", "Name")
-selectInput("type", "Type", choices = list("expense", "income"))
-selectInput("freq", "Frequency",
-  choices = list("daily", "workdays", "weekly", "monthly", "yearly")
+textInput("name", "What's the name of this transaction?")
+
+radioButtons("type", "Is this income or expenditure?",
+  choices = list("Income" = "income", "Expenditure" = "expense")
 )
-numericInput("amount", "Amount", NA)
+
+numericInput("amount", "What is the value of this transaction?", NA)
+
+radioButtons("freq", "How often does this transaction occur?",
+  choices = list(
+    "Once per day" = "daily",
+    "Once per workday (Mon-Fri)" = "workdays",
+    "Once per week" = "weekly",
+    "Once per month" = "monthly",
+    "Once per year" = "yearly"
+  )
+)
+
 actionButton("submit", "Submit", class = "btn-primary")
 
 observeEvent(input$submit, {
@@ -48,13 +94,62 @@ observeEvent(input$submit, {
 })
 ```
 
-Records
+### Remove a transaction
+
+```{r}
+numericInput("trns_rm_id", "Enter the transaction ID to remove", NA)
+
+actionButton("trns_rm", "Submit", class = "btn-primary")
+
+observeEvent(input$trns_rm, {
+  rm_record(input$trns_rm_id)
+  message("response submitted")
+})
+```
+
+Transactions Page
 =====================================================================
 
-### Records
+Transactions Table Row 
+---------------------------------------------------------------------
+
+### Transactions Table
 
 ```{r}
 renderTable(vals$records)
+```
+
+Summary Boxes Row
+---------------------------------------------------------------------
+
+### Transactions recorded
+
+```{r}
+renderValueBox({
+  valueBox(
+    nrow(vals$record)
+  )
+})
+```
+
+### Monthly Income
+
+```{r}
+renderValueBox({
+  valueBox(
+    nrow(vals$record)
+  )
+})
+```
+
+### Monthly Expenses
+
+```{r}
+renderValueBox({
+  valueBox(
+    nrow(vals$record)
+  )
+})
 ```
 
 Monthly Report
