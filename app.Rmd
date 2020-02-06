@@ -86,7 +86,7 @@ radioButtons("freq", "How often does this transaction occur?",
   )
 )
 
-actionButton("submit", "Submit", class = "btn-primary")
+actionButton("submit", "Add Transaction", class = "btn-primary")
 
 observeEvent(input$submit, {
   add_record(input$name, input$type, input$amount, input$freq)
@@ -99,7 +99,7 @@ observeEvent(input$submit, {
 ```{r}
 numericInput("trns_rm_id", "Enter the transaction ID to remove", NA)
 
-actionButton("trns_rm", "Submit", class = "btn-primary")
+actionButton("trns_rm", "Remove Transaction", class = "btn-primary")
 
 observeEvent(input$trns_rm, {
   rm_record(input$trns_rm_id)
@@ -116,7 +116,10 @@ Transactions Table Row
 ### Transactions Table
 
 ```{r}
-renderTable(vals$records)
+renderTable({
+  message("updating table")
+  vals$records
+})
 ```
 
 Summary Boxes Row
@@ -126,9 +129,8 @@ Summary Boxes Row
 
 ```{r}
 renderValueBox({
-  valueBox(
-    nrow(vals$record)
-  )
+  n_records <- nrow(vals$records)
+  valueBox(n_records)
 })
 ```
 
@@ -136,9 +138,28 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  valueBox(
-    nrow(vals$record)
-  )
+  incomes = vals$records[vals$records[,"type"] == "income",c("amount", "freq")]
+  print(incomes)
+
+  mthly = 0
+
+  if (nrow(incomes) != 0) {
+    for (i in 1:nrow(incomes)) {
+      mthly =
+        mthly + 
+        as.numeric(incomes[i,"amount"]) *
+        switch(
+          incomes[i,"freq"],
+          daily = 4.28*7,
+          workdays = 4.28*5,
+          weekly = 4.28,
+          monthly = 1,
+          yearly = 1/12
+        )
+    }
+  }
+  
+  valueBox(sprintf("$%.2f", mthly))
 })
 ```
 
@@ -146,8 +167,63 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
+  incomes = vals$records[vals$records[,"type"] == "expense",c("amount", "freq")]
+  print(incomes)
+
+  mthly = 0
+
+  if (nrow(incomes) != 0) {
+    for (i in 1:nrow(incomes)) {
+      mthly =
+        mthly + 
+        as.numeric(incomes[i,"amount"]) *
+        switch(
+          incomes[i,"freq"],
+          daily = 4.28*7,
+          workdays = 4.28*5,
+          weekly = 4.28,
+          monthly = 1,
+          yearly = 1/12
+        )
+    }
+  }
+  
+  valueBox(sprintf("$%.2f", mthly))
+})
+```
+
+### Monthly Net
+
+```{r}
+renderValueBox({
+  incomes = vals$records[,c("amount", "freq", "type")]
+
+  mthly = 0
+
+  if (nrow(incomes) != 0) {
+    for (i in 1:nrow(incomes)) {
+      mthly =
+        mthly + 
+        as.numeric(incomes[i,"amount"]) *
+        switch(
+          incomes[i,"freq"],
+          daily = 4.28*7,
+          workdays = 4.28*5,
+          weekly = 4.28,
+          monthly = 1,
+          yearly = 1/12
+        ) *
+        switch(
+          incomes[i,"type"],
+          expense = -1,
+          income = 1
+        )
+    }
+  }
+  
   valueBox(
-    nrow(vals$record)
+    sprintf("$%.2f", mthly),
+    color = ifelse(mthly <= 0, "warning", "primary")
   )
 })
 ```
