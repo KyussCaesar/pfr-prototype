@@ -9,3 +9,5 @@ packrat/lib*/
 !*.yml
 !backend/
 !Dockerfile
+!script/
+!script/*
