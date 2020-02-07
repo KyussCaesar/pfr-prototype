@@ -27,7 +27,9 @@ vals$records <-
     type = c(),
     amount = c(),
     freq = c(),
-    datetime_added = c()
+    datetime_added = c(),
+    datetime_added_str = c(),
+    mthly_equiv = c()
   )
 
 vals$idctr = 0
@@ -37,11 +39,26 @@ add_record <- function(n, t, a, f) {
   rid = vals$idctr + 1
   vals$idctr = rid
 
+  dttm_add = Sys.time()
+  mthly =
+    a *
+    switch(
+      f,
+      daily = 4.28*7,
+      workdays = 4.28*5,
+      weekly = 4.28,
+      monthly = 1,
+      yearly = 1/12
+    )
+    
   vals$records[
     nrow(vals$records) + 1,
-    c("id", "name", "type", "amount", "freq", "datetime_added")
+    c(
+      "id", "name", "type", "amount", "freq",
+      "datetime_added", "datetime_added_str", "mthly_equiv"
+    )
   ] =
-    c(rid, n, t, a, f, Sys.time())
+    c(rid, n, t, a, f, dttm_add, strftime(dttm_add, "%Y-%m-%dT%H:%M:%S"), mthly)
 
   rid
 }
@@ -138,27 +155,21 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  incomes = vals$records[vals$records[,"type"] == "income",c("amount", "freq")]
-  print(incomes)
 
   mthly = 0
 
-  if (nrow(incomes) != 0) {
-    for (i in 1:nrow(incomes)) {
-      mthly =
-        mthly + 
-        as.numeric(incomes[i,"amount"]) *
-        switch(
-          incomes[i,"freq"],
-          daily = 4.28*7,
-          workdays = 4.28*5,
-          weekly = 4.28,
-          monthly = 1,
-          yearly = 1/12
-        )
+  if (nrow(vals$records) != 0) {
+    incomes = vals$records[vals$records[,"type"] == "income",c("mthly_equiv")]
+
+    if (nrow(incomes) != 0) {
+      for (i in 1:nrow(incomes)) {
+        mthly = mthly + as.numeric(incomes[i,"mthly_equiv"])
+      }
+
     }
+
   }
-  
+
   valueBox(sprintf("$%.2f", mthly))
 })
 ```
@@ -167,27 +178,20 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  incomes = vals$records[vals$records[,"type"] == "expense",c("amount", "freq")]
-  print(incomes)
-
   mthly = 0
 
-  if (nrow(incomes) != 0) {
-    for (i in 1:nrow(incomes)) {
-      mthly =
-        mthly + 
-        as.numeric(incomes[i,"amount"]) *
-        switch(
-          incomes[i,"freq"],
-          daily = 4.28*7,
-          workdays = 4.28*5,
-          weekly = 4.28,
-          monthly = 1,
-          yearly = 1/12
-        )
+  if (nrow(vals$records) != 0) {
+    incomes = vals$records[vals$records[,"type"] == "expense",c("mthly_equiv")]
+
+    if (nrow(incomes) != 0) {
+      for (i in 1:nrow(incomes)) {
+        mthly = mthly + as.numeric(incomes[i,"mthly_equiv"])
+      }
+
     }
+
   }
-  
+
   valueBox(sprintf("$%.2f", mthly))
 })
 ```
@@ -196,31 +200,27 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  incomes = vals$records[,c("amount", "freq", "type")]
-
   mthly = 0
 
-  if (nrow(incomes) != 0) {
-    for (i in 1:nrow(incomes)) {
-      mthly =
-        mthly + 
-        as.numeric(incomes[i,"amount"]) *
-        switch(
-          incomes[i,"freq"],
-          daily = 4.28*7,
-          workdays = 4.28*5,
-          weekly = 4.28,
-          monthly = 1,
-          yearly = 1/12
-        ) *
-        switch(
-          incomes[i,"type"],
-          expense = -1,
-          income = 1
-        )
+  if (nrow(vals$records) != 0) {
+    incomes = vals$records[,c("mthly_equiv", "type")]
+
+    if (nrow(incomes) != 0) {
+      for (i in 1:nrow(incomes)) {
+        mthly =
+          mthly + 
+          as.numeric(incomes[i,"mthly_equiv"]) *
+          switch(
+            incomes[i,"type"],
+            expense = -1,
+            income = 1
+          )
+      }
+
     }
+
   }
-  
+
   valueBox(
     sprintf("$%.2f", mthly),
     color = ifelse(mthly <= 0, "warning", "primary")
