@@ -1,5 +1,7 @@
 # R session storage backend; just use a dataframe inside reactiveValues
 
+message("using session storage backend")
+
 vals = reactiveValues()
 vals$records <-
   data.frame(

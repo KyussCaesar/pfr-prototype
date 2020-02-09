@@ -19,6 +19,7 @@ message("Loading globals")
 
 # Load the storage backend
 source("backend/session.R")
+source("backend/local.R")
 ```
 
 Transactions Page
