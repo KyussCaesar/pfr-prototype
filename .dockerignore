@@ -4,5 +4,8 @@
 
 # put any build-time scripts in here
 !build/*
+!backend/*
+!packrat/*
+!.Rprofile
 !app.Rmd
 

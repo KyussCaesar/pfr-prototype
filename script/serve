@@ -5,4 +5,12 @@ set -euo pipefail
 IMAGE=$(basename "$(pwd)"):$(git rev-parse HEAD)
 
 docker build . -t ${IMAGE}
-docker run -it --rm -p 127.0.0.1:5000:8080 ${IMAGE}
+docker run \
+  -it \
+  --rm \
+  --user rstudio \
+  -v "$(pwd)"/data:/home/rstudio/data \
+  --env PFR_APP_STORAGE=data \
+  -p 127.0.0.1:8080:8080 \
+  "${IMAGE}"
+

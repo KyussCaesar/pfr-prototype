@@ -2,7 +2,7 @@ version: "3"
 
 services:
   rstudio:
-    image: rocker/verse:3.6.0
+    image: rocker/verse:3.6.2
 
     environment:
       - DISABLE_AUTH=true
