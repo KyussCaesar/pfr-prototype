@@ -18,7 +18,20 @@ options(error = function() traceback(3))
 message("Loading globals")
 
 # Load the storage backend
-source("backend/session.R")
+.backend = "session"
+.env_backend = Sys.getenv("PFR_BACKEND")
+if (!is.null(.env_backend) && .env_backend != "") {
+  .backend = .env_backend
+}
+
+.backend_file = sprintf("backend/%s.R", .backend)
+
+if (!file.exists(.backend_file)) {
+  stop(sprintf("%s (%s) is not a known backend", .backend, .backend_file))
+}
+
+message(sprintf("Loading %s backend from %s", .backend, .backend_file))
+source(.backend_file)
 ```
 
 Transactions Page
@@ -49,10 +62,21 @@ radioButtons("freq", "How often does this transaction occur?",
 )
 
 actionButton("submit", "Add Transaction", class = "btn-primary")
+actionButton("reset", "Clear", class = "btn-secondary")
+
+reset_inputs = function() {
+  updateTextInput(session, "name", value = "")
+  updateNumericInput(session, "amount", value = "")
+}
 
 observeEvent(input$submit, {
   add_record(input$name, input$type, input$amount, input$freq)
+  reset_inputs()
   message("response submitted")
+})
+
+observeEvent(input$reset, {
+  reset_inputs()
 })
 ```
 
@@ -65,6 +89,19 @@ actionButton("trns_rm", "Remove Transaction", class = "btn-primary")
 
 observeEvent(input$trns_rm, {
   rm_record(input$trns_rm_id)
+  updateNumericInput(session, "trns_rm_id", value = "")
+  message("response submitted")
+})
+```
+
+### Clear table
+
+This will remove _all_ transactions!
+
+```{r}
+actionButton("trns_rm_all", "Remove all transactions")
+observeEvent(input$trns_rm_all, {
+  rm_all()
   message("response submitted")
 })
 ```

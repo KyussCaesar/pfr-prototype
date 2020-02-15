@@ -15,13 +15,7 @@ if (!is.null(.env_storage_dir) && .env_storage_dir != "") {
 .storage = paste0(.storage_dir, "/app.rds")
 message(sprintf("using storage file %s", .storage))
 
-if (file.exists(.storage)) {
-  message("loading state from persistent storage")
-  vals <- readRDS(.storage)
-
-} else {
-  vals = reactiveValues()
-  vals$records <-
+new_records_table = function() {
     data.frame(
       id = c(),
       name = c(),
@@ -32,7 +26,15 @@ if (file.exists(.storage)) {
       datetime_added_str = c(),
       mthly_equiv = c()
     )
+}
 
+if (file.exists(.storage)) {
+  message("loading state from persistent storage")
+  vals <- readRDS(.storage)
+
+} else {
+  vals = reactiveValues()
+  vals$records <- new_records_table()
   vals$idctr = 0
 
   # initialise the persistence file
@@ -132,3 +134,8 @@ get_mthly_expense <- function() {
   .get_mthly_type("expense")
 }
 
+#' Removes all transactions
+rm_all <- function() {
+  vals$records <- new_records_table()
+  .persist()
+}
